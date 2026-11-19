@@ -81,10 +81,15 @@ RUN_NAME = f"{SPECIAL_NAME}_{PERIOD}"
 RESULTS_PATH = f"modelresults_{PERIOD}.md"
 
 ########## S3 Setup ##########
+# Credentials: explicit AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY (CI), or a named profile
+# locally (e.g. `export AWS_PROFILE=kopah`), which s3fs/botocore picks up on its own.
+S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "https://s3.kopah.uw.edu")
+_s3_auth = ({"key": os.environ["AWS_ACCESS_KEY_ID"], "secret": os.environ["AWS_SECRET_ACCESS_KEY"]}
+            if "AWS_ACCESS_KEY_ID" in os.environ else {})
+
 fs = s3fs.S3FileSystem(
-    key=os.environ["AWS_ACCESS_KEY_ID"],
-    secret=os.environ["AWS_SECRET_ACCESS_KEY"],
-    client_kwargs={"endpoint_url": os.environ["S3_ENDPOINT_URL"]},
+    **_s3_auth,
+    client_kwargs={"endpoint_url": S3_ENDPOINT_URL},
     config_kwargs={
         "request_checksum_calculation": "when_required",
         "response_checksum_validation": "when_required",
@@ -92,7 +97,8 @@ fs = s3fs.S3FileSystem(
 )
 
 storage_options = {
-    "client_kwargs": {"endpoint_url": os.environ["S3_ENDPOINT_URL"]},
+    **_s3_auth,
+    "client_kwargs": {"endpoint_url": S3_ENDPOINT_URL},
     "config_kwargs": {
         "request_checksum_calculation": "when_required",
         "response_checksum_validation": "when_required",
